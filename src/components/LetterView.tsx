@@ -98,21 +98,24 @@ export function LetterView({ letter, onClose }: LetterViewProps) {
 
   const toggleSecretAudio = () => {
     if (secretAudioRef.current) {
+      const audio = secretAudioRef.current;
       if (isPlayingSecret) {
-        secretAudioRef.current.pause();
+        audio.pause();
         setIsPlayingSecret(false);
       } else {
         if (isPlayingAudio && audioRef.current) {
            audioRef.current.pause();
            setIsPlayingAudio(false);
         }
-        const playPromise = secretAudioRef.current.play();
+        audio.load();
+        const playPromise = audio.play();
         if (playPromise !== undefined) {
           playPromise.then(() => {
             setIsPlayingSecret(true);
           }).catch(e => {
             console.warn("Audio play interrupted:", e);
             setIsPlayingSecret(false);
+            setSecretAudioError(true);
           });
         } else {
           setIsPlayingSecret(true);
@@ -391,7 +394,9 @@ export function LetterView({ letter, onClose }: LetterViewProps) {
                   className="px-6 py-4 bg-red-900/20 text-red-200 hover:text-white hover:bg-red-900/40 border border-red-900/50 rounded-full font-serif text-sm transition-all text-center flex items-center justify-center gap-3 w-full max-w-sm shadow-[0_0_15px_rgba(127,29,29,0.2)]"
                 >
                   <span className="text-xl flex-shrink-0">{isPlayingSecret ? '⏸' : '▶'}</span>
-                  <span className="leading-tight">{isPlayingSecret ? 'Остановить сообщение' : 'Послушай, если тебе совсем плохо (только наедине)'}</span>
+                  <span className="leading-tight">
+                    {secretAudioError ? 'Голосовое сообщение не загрузилось' : isPlayingSecret ? 'Остановить сообщение' : 'Послушай, если тебе совсем плохо (только наедине)'}
+                  </span>
                 </button>
                 {isPlayingSecret && (
                   <div className="flex gap-1 items-end h-4">
@@ -403,8 +408,8 @@ export function LetterView({ letter, onClose }: LetterViewProps) {
               </div>
             )}
 
-            {letter.audioPath && <audio ref={audioRef} src={`${letter.audioPath.split('?')[0]}?v=refresh123`} preload="none" playsInline onEnded={() => setIsPlayingAudio(false)} />}
-            {letter.id === '12' && <audio ref={secretAudioRef} src="/for_s.mp3?v=refresh123" preload="none" playsInline onEnded={() => setIsPlayingSecret(false)} />}
+            {letter.audioPath && <audio ref={audioRef} src={`${letter.audioPath.split('?')[0]}?v=refresh123`} preload="metadata" playsInline type="audio/mpeg" onEnded={() => setIsPlayingAudio(false)} onError={() => setAudioError(true)} />}
+            {letter.id === '12' && <audio ref={secretAudioRef} src="/for_s.mp3?v=refresh123" preload="metadata" playsInline type="audio/mpeg" onEnded={() => setIsPlayingSecret(false)} onError={() => setSecretAudioError(true)} />}
           </motion.div>
         );
 
