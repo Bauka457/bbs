@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 export function MusicPlayer({ isPlaying, toggleMusic }: { isPlaying: boolean, toggleMusic: () => void }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [audioError, setAudioError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -30,10 +31,12 @@ export function MusicPlayer({ isPlaying, toggleMusic }: { isPlaying: boolean, to
       return;
     }
 
+    setIsLoading(true);
     audio.play()
       .then(() => toggleMusic())
       .catch(error => {
         console.warn('Audio playback could not start:', error);
+        setIsLoading(false);
         setAudioError(true);
       });
   };
@@ -47,7 +50,9 @@ export function MusicPlayer({ isPlaying, toggleMusic }: { isPlaying: boolean, to
           preload="none"
           playsInline
           type="audio/mpeg"
-          onError={() => setAudioError(true)}
+          onLoadStart={() => setIsLoading(true)}
+          onCanPlay={() => setIsLoading(false)}
+          onError={() => { setIsLoading(false); setAudioError(true); }}
           src="/kapkan.mp3?v=refresh123"
         />
         
@@ -69,7 +74,7 @@ export function MusicPlayer({ isPlaying, toggleMusic }: { isPlaying: boolean, to
             <div className="flex flex-col">
               <span className="text-[10px] text-text-main font-medium leading-none mb-1">Наша Песня</span>
               <span className="text-[9px] text-text-muted leading-none">
-                {audioError ? 'Аудиофайл не загрузился' : `Нажми, чтобы ${isPlaying ? 'остановить' : 'включить'}`}
+                {audioError ? 'Аудиофайл не загрузился' : isLoading ? 'Подождите, загружаю музыку...' : `Нажми, чтобы ${isPlaying ? 'остановить' : 'включить'}`}
               </span>
             </div>
           </div>

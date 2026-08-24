@@ -420,7 +420,7 @@ export function LetterView({ letter, onClose }: LetterViewProps) {
             <button aria-busy={isAudioLoading} className="w-24 h-24 shrink-0 rounded-full bg-accent-warm/10 border border-accent-warm/30 flex items-center justify-center cursor-pointer shadow-[0_0_30px_rgba(232,184,199,0.15)] hover:bg-accent-warm/20 transition-colors" onClick={toggleAudio}>
               <span className="text-4xl text-accent-warm ml-2">{isAudioLoading ? '■' : isPlayingAudio ? '⏸' : '▶'}</span>
             </button>
-            {isAudioLoading && <p className="text-sm text-accent-warm/70">Загрузка песни...</p>}
+            {isAudioLoading && <p className="text-sm text-accent-warm/70">Подождите, загружаю музыку...</p>}
             <div className="flex gap-1 items-end h-8">
                {[...Array(12)].map((_, i) => (
                  <motion.div key={i} className="w-1.5 bg-accent-warm/50 rounded-full" animate={{ height: isPlayingAudio ? [8, Math.random() * 24 + 8, 8] : 4 }} transition={{ repeat: Infinity, duration: 0.5 + Math.random() * 0.5 }} />
