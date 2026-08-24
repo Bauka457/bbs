@@ -18,8 +18,10 @@ export function LetterView({ letter, onClose }: LetterViewProps) {
   const [randomMsgIndex, setRandomMsgIndex] = useState(-1);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [isAudioLoading, setIsAudioLoading] = useState(false);
   const secretAudioRef = useRef<HTMLAudioElement>(null);
   const [isPlayingSecret, setIsPlayingSecret] = useState(false);
+  const [isSecretAudioLoading, setIsSecretAudioLoading] = useState(false);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
 
   const [audioError, setAudioError] = useState(false);
@@ -81,6 +83,7 @@ export function LetterView({ letter, onClose }: LetterViewProps) {
            secretAudioRef.current.pause();
            setIsPlayingSecret(false);
         }
+        setIsAudioLoading(true);
         const playPromise = audioRef.current.play();
         if (playPromise !== undefined) {
           playPromise.then(() => {
@@ -88,6 +91,7 @@ export function LetterView({ letter, onClose }: LetterViewProps) {
           }).catch(e => {
             console.warn("Audio play interrupted:", e);
             setIsPlayingAudio(false);
+            setIsAudioLoading(false);
           });
         } else {
           setIsPlayingAudio(true);
@@ -108,6 +112,7 @@ export function LetterView({ letter, onClose }: LetterViewProps) {
            setIsPlayingAudio(false);
         }
         audio.load();
+        setIsSecretAudioLoading(true);
         const playPromise = audio.play();
         if (playPromise !== undefined) {
           playPromise.then(() => {
@@ -115,6 +120,7 @@ export function LetterView({ letter, onClose }: LetterViewProps) {
           }).catch(e => {
             console.warn("Audio play interrupted:", e);
             setIsPlayingSecret(false);
+            setIsSecretAudioLoading(false);
             setSecretAudioError(true);
           });
         } else {
@@ -378,9 +384,10 @@ export function LetterView({ letter, onClose }: LetterViewProps) {
         }
         return (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center justify-center min-h-[50vh] space-y-8 pt-8">
-            <button className="w-24 h-24 shrink-0 rounded-full bg-accent-warm/10 border border-accent-warm/30 flex items-center justify-center cursor-pointer shadow-[0_0_30px_rgba(232,184,199,0.15)] hover:bg-accent-warm/20 transition-colors" onClick={toggleAudio}>
-              <span className="text-4xl text-accent-warm ml-2">{isPlayingAudio ? '⏸' : '▶'}</span>
+            <button disabled={isAudioLoading} className="w-24 h-24 shrink-0 rounded-full bg-accent-warm/10 border border-accent-warm/30 flex items-center justify-center cursor-pointer shadow-[0_0_30px_rgba(232,184,199,0.15)] hover:bg-accent-warm/20 transition-colors disabled:cursor-wait disabled:opacity-60" onClick={toggleAudio}>
+              <span className="text-4xl text-accent-warm ml-2">{isAudioLoading ? '…' : isPlayingAudio ? '⏸' : '▶'}</span>
             </button>
+            {isAudioLoading && <p className="text-sm text-accent-warm/70">Загрузка песни...</p>}
             <div className="flex gap-1 items-end h-8">
                {[...Array(12)].map((_, i) => (
                  <motion.div key={i} className="w-1.5 bg-accent-warm/50 rounded-full" animate={{ height: isPlayingAudio ? [8, Math.random() * 24 + 8, 8] : 4 }} transition={{ repeat: Infinity, duration: 0.5 + Math.random() * 0.5 }} />
@@ -390,12 +397,13 @@ export function LetterView({ letter, onClose }: LetterViewProps) {
             {letter.id === '12' && (
               <div className="mt-8 flex flex-col items-center space-y-4 pt-8 border-t border-white/5 w-full">
                 <button 
+                  disabled={isSecretAudioLoading}
                   onClick={toggleSecretAudio}
-                  className="px-6 py-4 bg-red-900/20 text-red-200 hover:text-white hover:bg-red-900/40 border border-red-900/50 rounded-full font-serif text-sm transition-all text-center flex items-center justify-center gap-3 w-full max-w-sm shadow-[0_0_15px_rgba(127,29,29,0.2)]"
+                  className="px-6 py-4 bg-red-900/20 text-red-200 hover:text-white hover:bg-red-900/40 border border-red-900/50 rounded-full font-serif text-sm transition-all text-center flex items-center justify-center gap-3 w-full max-w-sm shadow-[0_0_15px_rgba(127,29,29,0.2)] disabled:cursor-wait disabled:opacity-60"
                 >
-                  <span className="text-xl flex-shrink-0">{isPlayingSecret ? '⏸' : '▶'}</span>
+                  <span className="text-xl flex-shrink-0">{isSecretAudioLoading ? '…' : isPlayingSecret ? '⏸' : '▶'}</span>
                   <span className="leading-tight">
-                    {secretAudioError ? 'Голосовое сообщение не загрузилось' : isPlayingSecret ? 'Остановить сообщение' : 'Послушай, если тебе совсем плохо (только наедине)'}
+                    {isSecretAudioLoading ? 'Загружаю голосовое сообщение...' : secretAudioError ? 'Голосовое сообщение не загрузилось' : isPlayingSecret ? 'Остановить сообщение' : 'Послушай, если тебе совсем плохо (только наедине)'}
                   </span>
                 </button>
                 {isPlayingSecret && (
@@ -408,8 +416,8 @@ export function LetterView({ letter, onClose }: LetterViewProps) {
               </div>
             )}
 
-            {letter.audioPath && <audio ref={audioRef} src={`${letter.audioPath.split('?')[0]}?v=refresh123`} preload="metadata" playsInline type="audio/mpeg" onEnded={() => setIsPlayingAudio(false)} onError={() => setAudioError(true)} />}
-            {letter.id === '12' && <audio ref={secretAudioRef} src="/for_s.mp3?v=refresh123" preload="metadata" playsInline type="audio/mpeg" onEnded={() => setIsPlayingSecret(false)} onError={() => setSecretAudioError(true)} />}
+            {letter.audioPath && <audio ref={audioRef} src={`${letter.audioPath.split('?')[0]}?v=refresh123`} preload="metadata" playsInline type="audio/mpeg" onLoadStart={() => setIsAudioLoading(true)} onCanPlay={() => setIsAudioLoading(false)} onEnded={() => setIsPlayingAudio(false)} onError={() => { setIsAudioLoading(false); setAudioError(true); }} />}
+            {letter.id === '12' && <audio ref={secretAudioRef} src="/for_s.mp3?v=refresh123" preload="metadata" playsInline type="audio/mpeg" onLoadStart={() => setIsSecretAudioLoading(true)} onCanPlay={() => setIsSecretAudioLoading(false)} onEnded={() => setIsPlayingSecret(false)} onError={() => { setIsSecretAudioLoading(false); setSecretAudioError(true); }} />}
           </motion.div>
         );
 
