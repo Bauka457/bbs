@@ -18,10 +18,12 @@ export function LetterView({ letter, onClose }: LetterViewProps) {
   const [randomMsgIndex, setRandomMsgIndex] = useState(-1);
   const audioRef = useRef<HTMLAudioElement>(null);
   const audioLoadingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const audioCancelRequested = useRef(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [isAudioLoading, setIsAudioLoading] = useState(false);
   const secretAudioRef = useRef<HTMLAudioElement>(null);
   const secretAudioLoadingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const secretAudioCancelRequested = useRef(false);
   const [isPlayingSecret, setIsPlayingSecret] = useState(false);
   const [isSecretAudioLoading, setIsSecretAudioLoading] = useState(false);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
@@ -77,6 +79,14 @@ export function LetterView({ letter, onClose }: LetterViewProps) {
 
   const toggleAudio = () => {
     if (audioRef.current) {
+      const audio = audioRef.current;
+      if (isAudioLoading) {
+        audioCancelRequested.current = true;
+        audio.pause();
+        setIsAudioLoading(false);
+        if (audioLoadingTimeout.current) clearTimeout(audioLoadingTimeout.current);
+        return;
+      }
       if (isPlayingAudio) {
         audioRef.current.pause();
         setIsPlayingAudio(false);
@@ -85,6 +95,7 @@ export function LetterView({ letter, onClose }: LetterViewProps) {
            secretAudioRef.current.pause();
            setIsPlayingSecret(false);
         }
+        audioCancelRequested.current = false;
         setIsAudioLoading(true);
         audioLoadingTimeout.current = setTimeout(() => {
           setIsAudioLoading(false);
@@ -99,6 +110,7 @@ export function LetterView({ letter, onClose }: LetterViewProps) {
             setIsPlayingAudio(false);
             setIsAudioLoading(false);
             if (audioLoadingTimeout.current) clearTimeout(audioLoadingTimeout.current);
+            if (audioCancelRequested.current) return;
           });
         } else {
           setIsPlayingAudio(true);
@@ -110,6 +122,13 @@ export function LetterView({ letter, onClose }: LetterViewProps) {
   const toggleSecretAudio = () => {
     if (secretAudioRef.current) {
       const audio = secretAudioRef.current;
+      if (isSecretAudioLoading) {
+        secretAudioCancelRequested.current = true;
+        audio.pause();
+        setIsSecretAudioLoading(false);
+        if (secretAudioLoadingTimeout.current) clearTimeout(secretAudioLoadingTimeout.current);
+        return;
+      }
       if (isPlayingSecret) {
         audio.pause();
         setIsPlayingSecret(false);
@@ -118,6 +137,7 @@ export function LetterView({ letter, onClose }: LetterViewProps) {
            audioRef.current.pause();
            setIsPlayingAudio(false);
         }
+        secretAudioCancelRequested.current = false;
         audio.load();
         setIsSecretAudioLoading(true);
         secretAudioLoadingTimeout.current = setTimeout(() => {
@@ -133,6 +153,7 @@ export function LetterView({ letter, onClose }: LetterViewProps) {
             setIsPlayingSecret(false);
             setIsSecretAudioLoading(false);
             if (secretAudioLoadingTimeout.current) clearTimeout(secretAudioLoadingTimeout.current);
+            if (secretAudioCancelRequested.current) return;
             setSecretAudioError(true);
           });
         } else {
@@ -396,8 +417,8 @@ export function LetterView({ letter, onClose }: LetterViewProps) {
         }
         return (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center justify-center min-h-[50vh] space-y-8 pt-8">
-            <button disabled={isAudioLoading} className="w-24 h-24 shrink-0 rounded-full bg-accent-warm/10 border border-accent-warm/30 flex items-center justify-center cursor-pointer shadow-[0_0_30px_rgba(232,184,199,0.15)] hover:bg-accent-warm/20 transition-colors disabled:cursor-wait disabled:opacity-60" onClick={toggleAudio}>
-              <span className="text-4xl text-accent-warm ml-2">{isAudioLoading ? '…' : isPlayingAudio ? '⏸' : '▶'}</span>
+            <button aria-busy={isAudioLoading} className="w-24 h-24 shrink-0 rounded-full bg-accent-warm/10 border border-accent-warm/30 flex items-center justify-center cursor-pointer shadow-[0_0_30px_rgba(232,184,199,0.15)] hover:bg-accent-warm/20 transition-colors" onClick={toggleAudio}>
+              <span className="text-4xl text-accent-warm ml-2">{isAudioLoading ? '■' : isPlayingAudio ? '⏸' : '▶'}</span>
             </button>
             {isAudioLoading && <p className="text-sm text-accent-warm/70">Загрузка песни...</p>}
             <div className="flex gap-1 items-end h-8">
@@ -409,13 +430,13 @@ export function LetterView({ letter, onClose }: LetterViewProps) {
             {letter.id === '12' && (
               <div className="mt-8 flex flex-col items-center space-y-4 pt-8 border-t border-white/5 w-full">
                 <button 
-                  disabled={isSecretAudioLoading}
                   onClick={toggleSecretAudio}
-                  className="px-6 py-4 bg-red-900/20 text-red-200 hover:text-white hover:bg-red-900/40 border border-red-900/50 rounded-full font-serif text-sm transition-all text-center flex items-center justify-center gap-3 w-full max-w-sm shadow-[0_0_15px_rgba(127,29,29,0.2)] disabled:cursor-wait disabled:opacity-60"
+                  aria-busy={isSecretAudioLoading}
+                  className="px-6 py-4 bg-red-900/20 text-red-200 hover:text-white hover:bg-red-900/40 border border-red-900/50 rounded-full font-serif text-sm transition-all text-center flex items-center justify-center gap-3 w-full max-w-sm shadow-[0_0_15px_rgba(127,29,29,0.2)]"
                 >
-                  <span className="text-xl flex-shrink-0">{isSecretAudioLoading ? '…' : isPlayingSecret ? '⏸' : '▶'}</span>
+                  <span className="text-xl flex-shrink-0">{isSecretAudioLoading ? '■' : isPlayingSecret ? '⏸' : '▶'}</span>
                   <span className="leading-tight">
-                    {isSecretAudioLoading ? 'Загружаю голосовое сообщение...' : secretAudioError ? 'Голосовое сообщение не загрузилось' : isPlayingSecret ? 'Остановить сообщение' : 'Послушай, если тебе совсем плохо (только наедине)'}
+                    {isSecretAudioLoading ? 'Остановить загрузку' : secretAudioError ? 'Голосовое сообщение не загрузилось' : isPlayingSecret ? 'Остановить сообщение' : 'Послушай, если тебе совсем плохо (только наедине)'}
                   </span>
                 </button>
                 {isPlayingSecret && (
