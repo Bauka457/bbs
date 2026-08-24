@@ -17,9 +17,11 @@ export function LetterView({ letter, onClose }: LetterViewProps) {
   const [countdown, setCountdown] = useState(5);
   const [randomMsgIndex, setRandomMsgIndex] = useState(-1);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const audioLoadingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [isAudioLoading, setIsAudioLoading] = useState(false);
   const secretAudioRef = useRef<HTMLAudioElement>(null);
+  const secretAudioLoadingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isPlayingSecret, setIsPlayingSecret] = useState(false);
   const [isSecretAudioLoading, setIsSecretAudioLoading] = useState(false);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
@@ -84,6 +86,10 @@ export function LetterView({ letter, onClose }: LetterViewProps) {
            setIsPlayingSecret(false);
         }
         setIsAudioLoading(true);
+        audioLoadingTimeout.current = setTimeout(() => {
+          setIsAudioLoading(false);
+          setAudioError(true);
+        }, 12000);
         const playPromise = audioRef.current.play();
         if (playPromise !== undefined) {
           playPromise.then(() => {
@@ -92,6 +98,7 @@ export function LetterView({ letter, onClose }: LetterViewProps) {
             console.warn("Audio play interrupted:", e);
             setIsPlayingAudio(false);
             setIsAudioLoading(false);
+            if (audioLoadingTimeout.current) clearTimeout(audioLoadingTimeout.current);
           });
         } else {
           setIsPlayingAudio(true);
@@ -113,6 +120,10 @@ export function LetterView({ letter, onClose }: LetterViewProps) {
         }
         audio.load();
         setIsSecretAudioLoading(true);
+        secretAudioLoadingTimeout.current = setTimeout(() => {
+          setIsSecretAudioLoading(false);
+          setSecretAudioError(true);
+        }, 12000);
         const playPromise = audio.play();
         if (playPromise !== undefined) {
           playPromise.then(() => {
@@ -121,6 +132,7 @@ export function LetterView({ letter, onClose }: LetterViewProps) {
             console.warn("Audio play interrupted:", e);
             setIsPlayingSecret(false);
             setIsSecretAudioLoading(false);
+            if (secretAudioLoadingTimeout.current) clearTimeout(secretAudioLoadingTimeout.current);
             setSecretAudioError(true);
           });
         } else {
@@ -416,8 +428,8 @@ export function LetterView({ letter, onClose }: LetterViewProps) {
               </div>
             )}
 
-            {letter.audioPath && <audio ref={audioRef} src={`${letter.audioPath.split('?')[0]}?v=refresh123`} preload="metadata" playsInline type="audio/mpeg" onLoadStart={() => setIsAudioLoading(true)} onCanPlay={() => setIsAudioLoading(false)} onEnded={() => setIsPlayingAudio(false)} onError={() => { setIsAudioLoading(false); setAudioError(true); }} />}
-            {letter.id === '12' && <audio ref={secretAudioRef} src="/for_s.mp3?v=refresh123" preload="metadata" playsInline type="audio/mpeg" onLoadStart={() => setIsSecretAudioLoading(true)} onCanPlay={() => setIsSecretAudioLoading(false)} onEnded={() => setIsPlayingSecret(false)} onError={() => { setIsSecretAudioLoading(false); setSecretAudioError(true); }} />}
+            {letter.audioPath && <audio ref={audioRef} src={`${letter.audioPath.split('?')[0]}?v=refresh123`} preload="metadata" playsInline type="audio/mpeg" onLoadStart={() => setIsAudioLoading(true)} onCanPlay={() => { setIsAudioLoading(false); if (audioLoadingTimeout.current) clearTimeout(audioLoadingTimeout.current); }} onEnded={() => setIsPlayingAudio(false)} onError={() => { setIsAudioLoading(false); setAudioError(true); if (audioLoadingTimeout.current) clearTimeout(audioLoadingTimeout.current); }} />}
+            {letter.id === '12' && <audio ref={secretAudioRef} src="/for_s.mp3?v=refresh123" preload="metadata" playsInline type="audio/mpeg" onLoadStart={() => setIsSecretAudioLoading(true)} onCanPlay={() => { setIsSecretAudioLoading(false); if (secretAudioLoadingTimeout.current) clearTimeout(secretAudioLoadingTimeout.current); }} onEnded={() => setIsPlayingSecret(false)} onError={() => { setIsSecretAudioLoading(false); setSecretAudioError(true); if (secretAudioLoadingTimeout.current) clearTimeout(secretAudioLoadingTimeout.current); }} />}
           </motion.div>
         );
 
