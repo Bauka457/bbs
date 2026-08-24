@@ -1,9 +1,9 @@
 import { motion } from 'motion/react';
-import { useEffect, useRef } from 'react';
-import { Play, Pause } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 export function MusicPlayer({ isPlaying, toggleMusic }: { isPlaying: boolean, toggleMusic: () => void }) {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const [audioError, setAudioError] = useState(false);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -34,6 +34,7 @@ export function MusicPlayer({ isPlaying, toggleMusic }: { isPlaying: boolean, to
       .then(() => toggleMusic())
       .catch(error => {
         console.warn('Audio playback could not start:', error);
+        setAudioError(true);
       });
   };
 
@@ -46,6 +47,7 @@ export function MusicPlayer({ isPlaying, toggleMusic }: { isPlaying: boolean, to
           preload="none"
           playsInline
           type="audio/mpeg"
+          onError={() => setAudioError(true)}
           src="/kapkan.mp3?v=refresh123"
         />
         
@@ -66,7 +68,9 @@ export function MusicPlayer({ isPlaying, toggleMusic }: { isPlaying: boolean, to
             </div>
             <div className="flex flex-col">
               <span className="text-[10px] text-text-main font-medium leading-none mb-1">Наша Песня</span>
-              <span className="text-[9px] text-text-muted leading-none">Нажми, чтобы {isPlaying ? 'остановить' : 'включить'}</span>
+              <span className="text-[9px] text-text-muted leading-none">
+                {audioError ? 'Аудиофайл не загрузился' : `Нажми, чтобы ${isPlaying ? 'остановить' : 'включить'}`}
+              </span>
             </div>
           </div>
           
