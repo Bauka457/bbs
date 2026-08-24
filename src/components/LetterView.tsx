@@ -404,7 +404,7 @@ export function LetterView({ letter, onClose }: LetterViewProps) {
             )}
 
             {letter.audioPath && <audio ref={audioRef} src={`${letter.audioPath.split('?')[0]}?v=refresh123`} preload="none" playsInline onEnded={() => setIsPlayingAudio(false)} />}
-            {letter.id === '12' && <audio ref={secretAudioRef} src="/for_s.mp4?v=refresh123" preload="none" playsInline onEnded={() => setIsPlayingSecret(false)} />}
+            {letter.id === '12' && <audio ref={secretAudioRef} src="/for_s.mp3?v=refresh123" preload="none" playsInline onEnded={() => setIsPlayingSecret(false)} />}
           </motion.div>
         );
 
