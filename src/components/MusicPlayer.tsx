@@ -21,19 +21,20 @@ export function MusicPlayer({ isPlaying, toggleMusic }: { isPlaying: boolean, to
   }, [isPlaying]);
 
   const handleToggle = () => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-      } else {
-        const playPromise = audioRef.current.play();
-        if (playPromise !== undefined) {
-           playPromise.catch(e => {
-             console.log("Mobile play blocked:", e);
-           });
-        }
-      }
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (!audio.paused) {
+      audio.pause();
+      toggleMusic();
+      return;
     }
-    toggleMusic();
+
+    audio.play()
+      .then(() => toggleMusic())
+      .catch(error => {
+        console.warn('Audio playback could not start:', error);
+      });
   };
 
   return (
@@ -44,6 +45,7 @@ export function MusicPlayer({ isPlaying, toggleMusic }: { isPlaying: boolean, to
           loop
           preload="none"
           playsInline
+          type="audio/mpeg"
           src="/kapkan.mp3?v=refresh123"
         />
         
